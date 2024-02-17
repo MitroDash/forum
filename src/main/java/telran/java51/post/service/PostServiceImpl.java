@@ -1,4 +1,4 @@
-package telran.java51.post.service;
+ package telran.java51.post.service;
 
 import java.util.List;
 import java.util.Set;
@@ -78,7 +78,6 @@ public class PostServiceImpl implements PostService {
 		Post post = postRepository.findById(id).orElseThrow(() -> new PostNotFoundException());
 		post.addLike();
 		postRepository.save(post);
-
 	}
 
 	@Override
