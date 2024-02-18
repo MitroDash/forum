@@ -9,7 +9,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.Singular;
 
 @Getter
 @EqualsAndHashCode(of = "login")
@@ -23,11 +22,11 @@ public class User {
 	String firstName;
 	@Setter
 	String lastName;
-	@Setter
 	Set<String> roles;
 
 	public User() {
 		roles = new HashSet<>(); 
+		roles.add("USER");
 	}
 
 	public User(String login, String password, String firstName, String lastName) {
