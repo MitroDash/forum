@@ -38,11 +38,6 @@ public class UserController {
 		return userService.getUser(principal.getName());
 	}
 
-//	@PostMapping("/login")
-//	public UserDto loginUser(@PathVariable String lodin) {
-//		return userService.loginUser(lodin);
-//	}
-
 	@DeleteMapping("/user/{user}")
 	public UserDto removeUser(@PathVariable String user) {
 		return userService.removeUser(user);

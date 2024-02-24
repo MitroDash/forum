@@ -5,6 +5,7 @@ import java.security.Principal;
 import java.util.Base64;
 
 import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
@@ -17,14 +18,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import telran.java51.accounting.dao.UserAccountRepository;
-import telran.java51.accounting.model.UserAccount;
+import telran.java51.accounting.dao.UserRepository;
+import telran.java51.accounting.model.User;
 
 @Component
 @RequiredArgsConstructor
+@Order(10)
 public class AuthenticationFilter implements Filter {
 
-	final UserAccountRepository userAccountRepository;
+	final UserRepository userRepository;
 
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
@@ -33,19 +35,19 @@ public class AuthenticationFilter implements Filter {
 		HttpServletResponse response = (HttpServletResponse) resp;
 
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
-			UserAccount userAccount;
+			User user;
 			try {
 				String[] credentials = getCredentials(request.getHeader("Authorization"));
-				userAccount = userAccountRepository.findById(credentials[0])
+				user = userRepository.findById(credentials[0])
 						.orElseThrow(RuntimeException::new);
-				if (!BCrypt.checkpw(credentials[1], userAccount.getPassword())) {
+				if (!BCrypt.checkpw(credentials[1], user.getPassword())) {
 					throw new RuntimeException();
 				}
-			} catch (Exception e) {
+			} catch (Exception e) { 
 				response.sendError(401);
 				return;
 			}
-			request = new WrappedRequest(request, userAccount.getLogin());
+			request = new WrappedRequest(request, user.getLogin());
 		}
 		
 		chain.doFilter(request, response);
@@ -53,7 +55,7 @@ public class AuthenticationFilter implements Filter {
 	}
 
 	private boolean checkEndPoint(String method, String path) {
-		return !(HttpMethod.POST.matches(method) && path.matches("/account/register"));
+		return !(HttpMethod.POST.matches(method) && (path.matches("/account/register") || path.startsWith("/forum/posts/")));
 	}
 
 	private String[] getCredentials(String header) {

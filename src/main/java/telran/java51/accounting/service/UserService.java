@@ -1,9 +1,5 @@
 package telran.java51.accounting.service;
 
-import java.security.Principal;
-
-import org.springframework.web.bind.annotation.RequestHeader;
-
 import telran.java51.accounting.dto.NewUserDto;
 import telran.java51.accounting.dto.UpdateUserDto;
 import telran.java51.accounting.dto.UserDto;
