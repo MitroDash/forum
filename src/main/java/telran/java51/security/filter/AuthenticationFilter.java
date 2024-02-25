@@ -3,6 +3,8 @@ package telran.java51.security.filter;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.Base64;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.core.annotation.Order;
@@ -20,12 +22,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import telran.java51.accounting.dao.UserRepository;
 import telran.java51.accounting.model.User;
+import telran.java51.security.context.SecurityContext;
+import telran.java51.security.model.UserPrincipal;
 
 @Component
 @RequiredArgsConstructor
 @Order(10)
 public class AuthenticationFilter implements Filter {
-
+	final SecurityContext securityContext;
 	final UserRepository userRepository;
 
 	@Override
@@ -35,19 +39,25 @@ public class AuthenticationFilter implements Filter {
 		HttpServletResponse response = (HttpServletResponse) resp;
 
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
-			User user;
-			try {
-				String[] credentials = getCredentials(request.getHeader("Authorization"));
-				user = userRepository.findById(credentials[0])
-						.orElseThrow(RuntimeException::new);
-				if (!BCrypt.checkpw(credentials[1], user.getPassword())) {
-					throw new RuntimeException();
-				}
-			} catch (Exception e) { 
-				response.sendError(401);
-				return;
+			String sessionId = request.getSession().getId();
+			UserPrincipal userPrincipal = securityContext.getUserBySessionId(sessionId);
+			if (userPrincipal == null) {
+				try {
+					String[] credentials = getCredentials(request.getHeader("Authorization"));
+					User user = userRepository.findById(credentials[0]).orElseThrow(RuntimeException::new);
+					if (!BCrypt.checkpw(credentials[1], user.getPassword())) {
+						throw new RuntimeException();
+					}
+					Set<String> roles = user.getRoles().stream().map(r -> r.name()).collect(Collectors.toSet());
+					userPrincipal = new UserPrincipal(user.getLogin(), roles);
+				} catch (Exception e) {
+					response.sendError(401);
+					return;
+				} 
+				
 			}
-			request = new WrappedRequest(request, user.getLogin());
+			
+			request = new WrappedRequest(request, userPrincipal.getName(), userPrincipal.getRoles());
 		}
 		
 		chain.doFilter(request, response);
@@ -64,17 +74,20 @@ public class AuthenticationFilter implements Filter {
 		return decode.split(":");
 	}
 
+	
 	private class WrappedRequest extends HttpServletRequestWrapper {
 		private String login;
+		private Set<String> roles;
 
-		public WrappedRequest(HttpServletRequest request, String login) {
+		public WrappedRequest(HttpServletRequest request, String login, Set<String> roles) {
 			super(request);
 			this.login = login;
+			this.roles = roles;
 		}
 
 		@Override
 		public Principal getUserPrincipal() {
-			return () -> login;
+			return new UserPrincipal(login, roles);
 		}
 
 	}

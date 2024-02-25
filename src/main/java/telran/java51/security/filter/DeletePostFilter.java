@@ -1,7 +1,6 @@
 package telran.java51.security.filter;
 
 import java.io.IOException;
-import java.security.Principal;
 
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
@@ -15,17 +14,15 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import telran.java51.accounting.dao.UserRepository;
-import telran.java51.accounting.model.User;
-import telran.java51.accounting.model.UserRole;
 import telran.java51.post.dao.PostRepository;
 import telran.java51.post.model.Post;
+import telran.java51.security.model.UserPrincipal;
 
 @Component
-@Order(20)
 @RequiredArgsConstructor
+@Order(60)
 public class DeletePostFilter implements Filter {
-	final UserRepository userRepository;
+
 	final PostRepository postRepository;
 
 	@Override
@@ -33,24 +30,28 @@ public class DeletePostFilter implements Filter {
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
-		
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
-			Principal principal  = request.getUserPrincipal();
-			User user = userRepository.findById(request.getUserPrincipal().getName()).get();
-			String[] arr = request.getServletPath().split("/");	
-			String id = arr[arr.length - 1];
-			Post post = postRepository.findById(id).get();
-			if (!(principal.getName().equals(post.getAuthor()) || user.getRoles().contains(UserRole.MODERATOR))) {
-				response.sendError(403, "Permision denied");
+			UserPrincipal user = (UserPrincipal) request.getUserPrincipal();
+			String[] arr = request.getServletPath().split("/");
+			String postId = arr[arr.length - 1];
+			Post post = postRepository.findById(postId).orElse(null);
+			if (post == null) {
+				response.sendError(404);
+				return;
+			}
+			if (!(user.getName().equals(post.getAuthor()) 
+					|| user.getRoles().contains("MODERATOR"))) {
+				response.sendError(403);
 				return;
 			}
 		}
 		chain.doFilter(request, response);
-
 	}
 
 	private boolean checkEndPoint(String method, String path) {
-		return HttpMethod.DELETE.matches(method) && path.matches("/post/\\w+");
+		return HttpMethod.DELETE.matches(method) && path.matches("/forum/post/\\w+");
+
 	}
 
 }
+

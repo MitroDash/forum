@@ -1,6 +1,6 @@
 package telran.java51.accounting.model;
 
-public enum UserRole {
+public enum Role {
 	
 	USER,
 	

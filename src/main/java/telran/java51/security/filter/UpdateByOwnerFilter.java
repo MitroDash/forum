@@ -16,7 +16,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Component
-@Order(20)
+@Order(30)
 public class UpdateByOwnerFilter implements Filter {
 
 	@Override
@@ -42,7 +42,9 @@ public class UpdateByOwnerFilter implements Filter {
 	}
 
 	private boolean checkEndPoint(String method, String path) {
-		return HttpMethod.PUT.matches(method) && path.matches("/account/user/\\w+");
+		return (HttpMethod.PUT.matches(method) && path.matches("/account/user/\\w+"))
+				|| (HttpMethod.POST.matches(method) && path.matches("/forum/post/\\w+"))
+				|| (HttpMethod.PUT.matches(method) && path.matches("/forum/post/\\w+/comment/\\w+"));
 	}
 
 }

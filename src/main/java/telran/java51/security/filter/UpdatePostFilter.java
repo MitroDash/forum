@@ -19,9 +19,10 @@ import telran.java51.post.dao.PostRepository;
 import telran.java51.post.model.Post;
 
 @Component
-@Order(15)
+@Order(50)
 @RequiredArgsConstructor
 public class UpdatePostFilter implements Filter {
+
 	final PostRepository postRepository;
 
 	@Override
@@ -29,14 +30,17 @@ public class UpdatePostFilter implements Filter {
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
-		
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
-			String[] arr = request.getServletPath().split("/");	
-			String id = arr[arr.length - 1];
-			Post post = postRepository.findById(id).get();
-			Principal principal  = request.getUserPrincipal();
+			Principal principal = request.getUserPrincipal();
+			String[] arr = request.getServletPath().split("/");
+			String postId = arr[arr.length - 1];
+			Post post = postRepository.findById(postId).orElse(null);
+			if (post == null) {
+				response.sendError(404);
+				return;
+			}
 			if (!principal.getName().equals(post.getAuthor())) {
-				response.sendError(403, "Permision denied");
+				response.sendError(403);
 				return;
 			}
 		}
@@ -45,7 +49,8 @@ public class UpdatePostFilter implements Filter {
 	}
 
 	private boolean checkEndPoint(String method, String path) {
-		return HttpMethod.PUT.matches(method) && path.matches("/post/\\w+");
+		return HttpMethod.PUT.matches(method) && path.matches("/forum/post/\\w+");
+
 	}
 
 }

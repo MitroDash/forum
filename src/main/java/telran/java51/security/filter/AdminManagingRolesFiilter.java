@@ -12,16 +12,11 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import telran.java51.accounting.dao.UserRepository;
-import telran.java51.accounting.model.User;
-import telran.java51.accounting.model.UserRole;
+import telran.java51.security.model.UserPrincipal;
 
 @Component
-@RequiredArgsConstructor
 @Order(20)
 public class AdminManagingRolesFiilter implements Filter {
-	final UserRepository userRepository;
 
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
@@ -29,16 +24,16 @@ public class AdminManagingRolesFiilter implements Filter {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
-		   User user = userRepository.findById(request.getUserPrincipal().getName()).get();
-		   if (!user.getRoles().contains(UserRole.ADMINISTRATOR)) {
-			response.sendError(403, "Permision denied");
-			return;
-		}
+			UserPrincipal user = (UserPrincipal) request.getUserPrincipal();
+			if (!user.getRoles().contains("ADMINISTRATOR")) {
+				response.sendError(403, "Permision denied");
+				return;
+			}
 		}
 		chain.doFilter(request, response);
 
 	}
-	
+
 	private boolean checkEndPoint(String method, String path) {
 		return path.matches("/account/user/\\w+/role/\\w+");
 	}

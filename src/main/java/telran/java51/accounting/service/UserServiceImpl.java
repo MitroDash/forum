@@ -14,7 +14,7 @@ import telran.java51.accounting.dto.UserRoleDto;
 import telran.java51.accounting.dto.exeption.UserAlreadyExistExeption;
 import telran.java51.accounting.dto.exeption.UserNotFoundExeption;
 import telran.java51.accounting.model.User;
-import telran.java51.accounting.model.UserRole;
+import telran.java51.accounting.model.Role;
 
 @Service
 @RequiredArgsConstructor
@@ -62,7 +62,7 @@ public class UserServiceImpl implements UserService, CommandLineRunner {
 	@Override
 	public UserRoleDto addRole(String login, String role) {
 		User user = userRepository.findById(login).orElseThrow(() -> new UserNotFoundExeption());
-		user.addRole(UserRole.valueOf(role.toUpperCase()));
+		user.addRole(Role.valueOf(role.toUpperCase()));
 		userRepository.save(user);
 		return modelMapper.map(user, UserRoleDto.class);
 	}
@@ -93,8 +93,8 @@ public class UserServiceImpl implements UserService, CommandLineRunner {
 		if (!userRepository.existsById("admin")) {
 			String password = BCrypt.hashpw("admin", BCrypt.gensalt());
 			User user = new User("admin", password, "", "");
-			user.addRole(UserRole.ADMINISTRATOR);
-			user.addRole(UserRole.MODERATOR);
+			user.addRole(Role.ADMINISTRATOR);
+			user.addRole(Role.MODERATOR);
 			userRepository.save(user);
 		}
 		
