@@ -1,11 +1,9 @@
 package telran.java51.accounting.service;
 
-import java.security.Principal;
-
 import org.mindrot.jbcrypt.BCrypt;
 import org.modelmapper.ModelMapper;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 import lombok.RequiredArgsConstructor;
 import telran.java51.accounting.dao.UserRepository;
@@ -19,7 +17,7 @@ import telran.java51.accounting.model.User;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService, CommandLineRunner {
 	
 	final UserRepository userRepository;
 	final ModelMapper modelMapper;
@@ -78,7 +76,8 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public void changePassword(String login, String newPassword) {
 		User user = userRepository.findById(login).orElseThrow(() -> new UserNotFoundExeption());
-		user.setPassword(newPassword);
+		String password = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+		user.setPassword(password);
 		userRepository.save(user);
 	}
 
@@ -86,6 +85,18 @@ public class UserServiceImpl implements UserService {
 	public UserDto getUser(String login) {
 		User user1 = userRepository.findById(login).orElseThrow(() -> new UserNotFoundExeption());
 		return modelMapper.map(user1, UserDto.class);
+	}
+
+	@Override
+	public void run(String... args) throws Exception {
+		if (!userRepository.existsById("admin")) {
+			String password = BCrypt.hashpw("admin", BCrypt.gensalt());
+			User userAccount = new User("admin", password, "", "");
+			userAccount.addRole("MODERATOR");
+			userAccount.addRole("ADMINISTRATOR");
+			userRepository.save(userAccount);
+		}
+		
 	}
 
 }
