@@ -1,4 +1,4 @@
- package telran.java51.post.service;
+package telran.java51.post.service;
 
 import java.util.List;
 import java.util.Set;

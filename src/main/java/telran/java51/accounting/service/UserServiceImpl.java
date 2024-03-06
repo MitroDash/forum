@@ -29,8 +29,7 @@ public class UserServiceImpl implements UserService, CommandLineRunner {
 		if (userRepository.existsById(user.getLogin())) {
 			throw new UserAlreadyExistExeption();
 		} else {
-			String password = passwordEncoder.encode(newUserDto.getPassword());
-			user.setPassword(password);
+			user.setPassword(newUserDto.getPassword());
 			user = userRepository.save(user);
 		}
 		
